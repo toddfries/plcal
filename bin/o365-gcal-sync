@@ -13,6 +13,8 @@ my %o = (past => 7, future => 90, detail => 'full',
 GetOptions(\%o, 'past=i', 'future=i', 'detail=s', 'graph-account=s' => \$o{graph_account},
     'google-account=s' => \$o{google_account}, 'calendar=s', 'dry-run|n', 'no-delete', 'help|h')
     or die "bad options\n";
+# Getopt stores "dry-run" as $o{"dry-run"}; normalize dashes so $o{dry_run} etc. work.
+for my $k (grep { /-/ } keys %o) { (my $u = $k) =~ tr/-/_/; $o{$u} = delete $o{$k} }
 if ($o{help} || !$o{calendar}) {
     print "usage: o365-gcal-sync --calendar GOOGLE_CAL_ID [--dry-run] [--past 7] [--future 90]\n",
           "       [--detail full|busy] [--graph-account o365cal] [--google-account gcal] [--no-delete]\n";

@@ -9,6 +9,8 @@ my %o = (google_account => $ENV{GCAL_PIZAUTH} // 'gcal', calendar => $ENV{GCAL_I
          detail => 'full', state => ($ENV{HOME} // '.') . '/.local/state/maildir-ics-trawl.json');
 GetOptions(\%o, 'calendar=s', 'google-account=s' => \$o{google_account}, 'state=s', 'tz=s', 'detail=s',
     'dry-run|n', 'help|h') or die "bad options\n";
+# Getopt stores "dry-run" as $o{"dry-run"}; normalize dashes so $o{dry_run} etc. work.
+for my $k (grep { /-/ } keys %o) { (my $u = $k) =~ tr/-/_/; $o{$u} = delete $o{$k} }
 if ($o{help} || !$o{calendar} || !@ARGV) {
     print "usage: maildir-ics-trawl --calendar GOOGLE_CAL_ID [--dry-run] [--state FILE] [--tz America/Chicago]\n",
           "       [--detail full|busy] [--google-account gcal] MAILDIR [MAILDIR...]\n";
