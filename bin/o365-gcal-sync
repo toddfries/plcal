@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+# Mirror an Office 365 calendar (Graph calendarView) onto a Google calendar.
+use strict; use warnings;
+use FindBin; use lib "$FindBin::Bin/../lib";
+use Getopt::Long;
+use POSIX qw(strftime);
+use O365GCal::Token; use O365GCal::Graph; use O365GCal::Google;
+
+my %o = (past => 7, future => 90, detail => 'full',
+         graph_account => $ENV{O365_PIZAUTH} // 'o365cal',
+         google_account => $ENV{GCAL_PIZAUTH} // 'gcal',
+         calendar => $ENV{GCAL_ID});
+GetOptions(\%o, 'past=i', 'future=i', 'detail=s', 'graph-account=s' => \$o{graph_account},
+    'google-account=s' => \$o{google_account}, 'calendar=s', 'dry-run|n', 'no-delete', 'help|h')
+    or die "bad options\n";
+if ($o{help} || !$o{calendar}) {
+    print "usage: o365-gcal-sync --calendar GOOGLE_CAL_ID [--dry-run] [--past 7] [--future 90]\n",
+          "       [--detail full|busy] [--graph-account o365cal] [--google-account gcal] [--no-delete]\n";
+    exit($o{help} ? 0 : 2);
+}
+die "--detail must be full or busy\n" unless $o{detail} =~ /\A(full|busy)\z/;
+my $now = time;
+my $start = strftime('%Y-%m-%dT00:00:00Z', gmtime($now - $o{past} * 86400));
+my $end   = strftime('%Y-%m-%dT00:00:00Z', gmtime($now + $o{future} * 86400));
+
+my $events = O365GCal::Graph::fetch(token_cb => sub { O365GCal::Token::get($o{graph_account}) },
+    start => $start, end => $end);
+my $g = O365GCal::Google->new(calendar => $o{calendar}, dry_run => $o{dry_run},
+    token_cb => sub { O365GCal::Token::get($o{google_account}) });
+my $have = $g->list_managed(timeMin => $start, timeMax => $end);
+my %seen;
+for my $e (@$events) {
+    my $key = O365GCal::Graph::key_for($e);
+    my $kid = O365GCal::Google::key_id($key);
+    next if $e->{isCancelled};          # left unseen => deleted below
+    $seen{$kid} = 1;
+    my $body = O365GCal::Graph::to_google($e, detail => $o{detail});
+    $body->{_extra_private} = { o365src => 'graph' };
+    $g->upsert($key, $body, existing => $have->{$kid});
+}
+unless ($o{no_delete}) {
+    for my $kid (sort keys %$have) {
+        my $ev = $have->{$kid};
+        next if $seen{$kid};
+        next unless ($ev->{extendedProperties}{private}{o365src} // '') eq 'graph';
+        $g->delete_event($ev, 'gone from O365 window');
+    }
+}
+printf "%swindow %s..%s graph=%d %s\n", ($o{dry_run} ? '[dry-run] ' : ''), $start, $end, scalar(@$events), $g->summary;

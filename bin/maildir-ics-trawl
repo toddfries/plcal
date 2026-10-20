@@ -1,0 +1,26 @@
+#!/usr/bin/env perl
+# Run after mbsync: mirror invites (text/calendar REQUEST/CANCEL) found in Maildirs to Google Calendar.
+use strict; use warnings;
+use FindBin; use lib "$FindBin::Bin/../lib";
+use Getopt::Long;
+use O365GCal::Token; use O365GCal::Google; use O365GCal::Trawl;
+
+my %o = (google_account => $ENV{GCAL_PIZAUTH} // 'gcal', calendar => $ENV{GCAL_ID}, tz => 'America/Chicago',
+         detail => 'full', state => ($ENV{HOME} // '.') . '/.local/state/maildir-ics-trawl.json');
+GetOptions(\%o, 'calendar=s', 'google-account=s' => \$o{google_account}, 'state=s', 'tz=s', 'detail=s',
+    'dry-run|n', 'help|h') or die "bad options\n";
+if ($o{help} || !$o{calendar} || !@ARGV) {
+    print "usage: maildir-ics-trawl --calendar GOOGLE_CAL_ID [--dry-run] [--state FILE] [--tz America/Chicago]\n",
+          "       [--detail full|busy] [--google-account gcal] MAILDIR [MAILDIR...]\n";
+    exit($o{help} ? 0 : 2);
+}
+(my $sd = $o{state}) =~ s{/[^/]+$}{}; mkdir $sd unless -d $sd;
+my $g = O365GCal::Google->new(calendar => $o{calendar}, dry_run => $o{dry_run},
+    token_cb => sub { O365GCal::Token::get($o{google_account}) });
+my $t = O365GCal::Trawl->new(google => $g, state_file => $o{state}, default_tz => $o{tz}, detail => $o{detail});
+$t->load_state;
+my $n = $t->scan_maildirs(@ARGV);
+$t->save_state unless $o{dry_run};     # dry-run never records progress
+my $st = $t->{stats};
+printf "%svevents=%d %s | %s\n", ($o{dry_run} ? '[dry-run] ' : ''), $n, $g->summary,
+    join(' ', map { "$_=$st->{$_}" } sort keys %$st);

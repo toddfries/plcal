@@ -1,0 +1,39 @@
+Message-ID: <m5@example.invalid>
+Subject: Fwd: x
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="F"
+
+--F
+Content-Type: text/plain
+
+fyi
+--F
+Content-Type: message/rfc822
+
+Message-ID: <inner5@example.invalid>
+Subject: x
+MIME-Version: 1.0
+Content-Type: text/calendar; method=REQUEST; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+BEGIN:VCALENDAR
+METHOD:REQUEST
+VERSION:2.0
+BEGIN:VEVENT
+UID:synthetic-allday-002@example.invalid
+SUMMARY:Offsite Day
+DTSTART;VALUE=DATE:20261201
+SEQUENCE:0
+DTSTAMP:20261020T120000Z
+END:VEVENT
+BEGIN:VEVENT
+UID:synthetic-tz-003@example.invalid
+SUMMARY:Call
+DTSTART;TZID="(UTC-05:00) Eastern Time (US & Canada)":20261203T140000
+DURATION:PT45M
+SEQUENCE:0
+DTSTAMP:20261020T120000Z
+END:VEVENT
+END:VCALENDAR
+
+--F--

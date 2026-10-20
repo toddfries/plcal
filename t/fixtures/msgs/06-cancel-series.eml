@@ -1,0 +1,16 @@
+Message-ID: <m6@example.invalid>
+Subject: x
+MIME-Version: 1.0
+Content-Type: text/calendar; method=CANCEL; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+BEGIN:VCALENDAR
+METHOD:CANCEL
+VERSION:2.0
+BEGIN:VEVENT
+UID:synthetic-weekly-001@example.invalid
+DTSTART;TZID=Central Standard Time:20261102T090000
+SEQUENCE:3
+DTSTAMP:20261024T120000Z
+END:VEVENT
+END:VCALENDAR

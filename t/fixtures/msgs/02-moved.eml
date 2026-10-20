@@ -1,0 +1,19 @@
+Message-ID: <m2@example.invalid>
+Subject: x
+MIME-Version: 1.0
+Content-Type: text/calendar; method=REQUEST; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+BEGIN:VCALENDAR
+METHOD:REQUEST
+VERSION:2.0
+BEGIN:VEVENT
+UID:synthetic-weekly-001@example.invalid
+RECURRENCE-ID;TZID=3DCentral Standard Time:20261109T090000
+SUMMARY:Weekly Widget Standup (moved)
+DTSTART;TZID=3DCentral Standard Time:20261109T100000
+DTEND;TZID=3DCentral Standard Time:20261109T103000
+SEQUENCE:1
+DTSTAMP:20261021T120000Z
+END:VEVENT
+END:VCALENDAR
